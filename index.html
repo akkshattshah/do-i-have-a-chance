@@ -854,10 +854,67 @@
   </div>
 
   <script>
+    // ── State ──
+    let uploadedFiles = { you: null, them: null };
+    let lastAnalysisTime = 0;
+    let abortController = null;
+
+    window.addEventListener('beforeunload', () => {
+      if (abortController) abortController.abort();
+    });
+
+    // ── Image processing (resize, JPEG 70%, strips EXIF via canvas) ──
+    function processImage(file) {
+      return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => {
+          const MAX_W = 512;
+          let w = img.width, h = img.height;
+          if (w > MAX_W) { h = Math.round(h * (MAX_W / w)); w = MAX_W; }
+          const canvas = document.createElement('canvas');
+          canvas.width = w;
+          canvas.height = h;
+          canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+          const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+          resolve(dataUrl.split(',')[1]);
+        };
+        img.onerror = reject;
+        img.src = URL.createObjectURL(file);
+      });
+    }
+
+    // ── SHA-256 hashing ──
+    async function hashImages(b64a, b64b) {
+      const data = new TextEncoder().encode(b64a + b64b);
+      const buf = await crypto.subtle.digest('SHA-256', data);
+      return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+
+    // ── LocalStorage cache (30-day TTL) ──
+    function getCached(hash) {
+      try {
+        const raw = localStorage.getItem('dihac_' + hash);
+        if (!raw) return null;
+        const entry = JSON.parse(raw);
+        if (Date.now() - entry.timestamp > 30 * 24 * 60 * 60 * 1000) {
+          localStorage.removeItem('dihac_' + hash);
+          return null;
+        }
+        return entry.result;
+      } catch { return null; }
+    }
+
+    function setCache(hash, result) {
+      try {
+        localStorage.setItem('dihac_' + hash, JSON.stringify({ result, timestamp: Date.now() }));
+      } catch { /* storage full, ignore */ }
+    }
+
     // ── Upload handling ──
     function handleUpload(input, who) {
       const file = input.files[0];
       if (!file) return;
+      uploadedFiles[who] = file;
       const reader = new FileReader();
       reader.onload = function(e) {
         const circle = document.getElementById(who === 'you' ? 'uploadYou' : 'uploadThem');
@@ -874,15 +931,46 @@
       document.getElementById(id).classList.add('active');
     }
 
-    // ── Loading flow ──
-    const loadingMessages = [
-      'Scanning your face...',
-      'Scanning their face...',
-      'Comparing features...',
-      'Calculating your chances...'
+    // ── Loading animation ──
+    function runLoadingSteps() {
+      const steps = document.querySelectorAll('.loading-step');
+      steps.forEach(s => {
+        s.classList.remove('visible', 'done');
+        s.querySelector('.step-icon').className = 'step-icon arrow';
+        s.querySelector('.step-icon').innerHTML = '&#9656;';
+      });
+
+      return new Promise(resolve => {
+        let current = 0;
+        function advanceStep() {
+          if (current > 0) {
+            const prev = steps[current - 1];
+            prev.classList.add('done');
+            const icon = prev.querySelector('.step-icon');
+            icon.className = 'step-icon check';
+            icon.innerHTML = '&#10003;';
+          }
+          if (current < steps.length) {
+            steps[current].classList.add('visible');
+            current++;
+            setTimeout(advanceStep, 1000);
+          } else {
+            setTimeout(resolve, 600);
+          }
+        }
+        setTimeout(advanceStep, 300);
+      });
+    }
+
+    // ── Fallback verdicts (used when API fails) ──
+    const fallbackVerdicts = [
+      { you_score: 5, them_score: 7, verdict: "You might just pull this off if you rizz hard enough", subtitle: "Better have a personality that carries" },
+      { you_score: 4, them_score: 8, verdict: "Bro thinks he has a chance lmaooo", subtitle: "The delusion is strong with this one" },
+      { you_score: 6, them_score: 7, verdict: "Not impossible, shoot your shot carefully", subtitle: "One wrong move and it's over though" },
     ];
 
-    function startAnalysis() {
+    // ── Main analysis flow ──
+    async function startAnalysis() {
       const youHas = document.getElementById('uploadYou').classList.contains('has-image');
       const themHas = document.getElementById('uploadThem').classList.contains('has-image');
 
@@ -895,36 +983,55 @@
         return;
       }
 
+      const now = Date.now();
+      if (now - lastAnalysisTime < 5000) return;
+      lastAnalysisTime = now;
+
       showScreen('screen-loading');
 
-      const steps = document.querySelectorAll('.loading-step');
-      steps.forEach(s => {
-        s.classList.remove('visible', 'done');
-        s.querySelector('.step-icon').className = 'step-icon arrow';
-        s.querySelector('.step-icon').innerHTML = '&#9656;';
-      });
+      const [loadingDone, imageYou, imageThem] = await Promise.all([
+        runLoadingSteps(),
+        processImage(uploadedFiles.you),
+        processImage(uploadedFiles.them),
+      ]);
 
-      let current = 0;
+      const hash = await hashImages(imageYou, imageThem);
 
-      function advanceStep() {
-        if (current > 0) {
-          const prev = steps[current - 1];
-          prev.classList.add('done');
-          const icon = prev.querySelector('.step-icon');
-          icon.className = 'step-icon check';
-          icon.innerHTML = '&#10003;';
-        }
-
-        if (current < steps.length) {
-          steps[current].classList.add('visible');
-          current++;
-          setTimeout(advanceStep, 1000);
-        } else {
-          setTimeout(showResult, 600);
-        }
+      const cached = getCached(hash);
+      if (cached) {
+        showResult(cached);
+        return;
       }
 
-      setTimeout(advanceStep, 300);
+      let result;
+      try {
+        if (abortController) abortController.abort();
+        abortController = new AbortController();
+
+        const res = await fetch('/api/analyze', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ imageYou, imageThem }),
+          signal: abortController.signal,
+        });
+
+        if (!res.ok) throw new Error('API error ' + res.status);
+        result = await res.json();
+      } catch (err) {
+        if (err.name === 'AbortError') return;
+        result = fallbackVerdicts[Math.floor(Math.random() * fallbackVerdicts.length)];
+      }
+
+      abortController = null;
+
+      if (result.no_face) {
+        showScreen('screen-home');
+        alert(result.message || 'Please upload a real photo of a person');
+        return;
+      }
+
+      setCache(hash, result);
+      showResult(result);
     }
 
     // ── Chance formula ──
@@ -939,33 +1046,22 @@
       return 3;
     }
 
-    // ── Hardcoded results (will be replaced by AI later) ──
-    const verdicts = [
-      { you: 3, them: 9, text: "You're cooked bro, she's outta your league fr fr", sub: "Maybe focus on yourself for a bit king", color: "red" },
-      { you: 4, them: 8, text: "Bro thinks he has a chance lmaooo", sub: "The delusion is strong with this one", color: "red" },
-      { you: 5, them: 7, text: "You might just pull this off if you rizz hard enough", sub: "Better have a personality that carries", color: "yellow" },
-      { you: 6, them: 7, text: "Not impossible, shoot your shot carefully", sub: "One wrong move and it's over though", color: "yellow" },
-      { you: 4, them: 9, text: "Nah this ain't it chief, respectfully", sub: "Sometimes you gotta know when to fold", color: "red" },
-      { you: 3, them: 8, text: "Delusional but we respect the confidence", sub: "Confidence is key... but so is being realistic", color: "red" },
-      { you: 5, them: 6, text: "Hmm this could actually work no cap", sub: "You're not as far off as you think", color: "green" },
-      { you: 6, them: 8, text: "It's giving audacity but maybe just maybe", sub: "Stranger things have happened fr", color: "yellow" },
-    ];
-
-    function showResult() {
-      const v = verdicts[Math.floor(Math.random() * verdicts.length)];
-
+    // ── Show result screen ──
+    function showResult(data) {
       document.getElementById('resultYouImg').src = document.getElementById('previewYou').src;
       document.getElementById('resultThemImg').src = document.getElementById('previewThem').src;
-      document.getElementById('resultYouRating').textContent = v.you + '/10';
-      document.getElementById('resultThemRating').textContent = v.them + '/10';
+      document.getElementById('resultYouRating').textContent = data.you_score + '/10';
+      document.getElementById('resultThemRating').textContent = data.them_score + '/10';
 
       const verdictEl = document.getElementById('resultVerdict');
-      verdictEl.textContent = v.text;
-      verdictEl.className = 'result-verdict verdict-' + v.color;
+      verdictEl.textContent = data.verdict;
+      const diff = data.them_score - data.you_score;
+      const color = diff >= 4 ? 'red' : diff >= 2 ? 'yellow' : 'green';
+      verdictEl.className = 'result-verdict verdict-' + color;
 
-      document.getElementById('resultSubtext').textContent = v.sub;
+      document.getElementById('resultSubtext').textContent = data.subtitle;
 
-      const chance = calcChance(v.you, v.them);
+      const chance = calcChance(data.you_score, data.them_score);
       document.getElementById('chancePercent').textContent = chance + '%';
       const fill = document.getElementById('chanceBarFill');
       fill.style.width = '0%';
@@ -982,6 +1078,7 @@
     // ── Reset ──
     function resetAll() {
       showScreen('screen-home');
+      uploadedFiles = { you: null, them: null };
 
       ['uploadYou', 'uploadThem'].forEach(id => {
         const el = document.getElementById(id);
