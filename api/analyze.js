@@ -82,6 +82,10 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
+  if (!process.env.OPENAI_API_KEY) {
+    return res.status(500).json({ error: "API key not configured" });
+  }
+
   const contentLength = parseInt(req.headers["content-length"] || "0", 10);
   if (contentLength > 2 * 1024 * 1024) {
     return res.status(413).json({ error: "Payload too large" });

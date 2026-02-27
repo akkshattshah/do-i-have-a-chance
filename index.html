@@ -962,12 +962,7 @@
       });
     }
 
-    // ── Fallback verdicts (used when API fails) ──
-    const fallbackVerdicts = [
-      { you_score: 5, them_score: 7, verdict: "You might just pull this off if you rizz hard enough", subtitle: "Better have a personality that carries" },
-      { you_score: 4, them_score: 8, verdict: "Bro thinks he has a chance lmaooo", subtitle: "The delusion is strong with this one" },
-      { you_score: 6, them_score: 7, verdict: "Not impossible, shoot your shot carefully", subtitle: "One wrong move and it's over though" },
-    ];
+    // ── (no fallback verdicts — if AI fails, we show an error) ──
 
     // ── Main analysis flow ──
     async function startAnalysis() {
@@ -1015,11 +1010,17 @@
           signal: abortController.signal,
         });
 
-        if (!res.ok) throw new Error('API error ' + res.status);
+        if (!res.ok) {
+          const errBody = await res.json().catch(() => ({}));
+          throw new Error(errBody.error || 'API error ' + res.status);
+        }
         result = await res.json();
       } catch (err) {
         if (err.name === 'AbortError') return;
-        result = fallbackVerdicts[Math.floor(Math.random() * fallbackVerdicts.length)];
+        abortController = null;
+        showScreen('screen-home');
+        alert('Something went wrong: ' + (err.message || 'Please try again'));
+        return;
       }
 
       abortController = null;
