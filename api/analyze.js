@@ -25,18 +25,12 @@ Output format when both faces detected:
 Output format when face NOT detected:
 {"no_face": true, "message": "<short explanation>"}`;
 
-const FALLBACK = {
-  you_score: 5,
-  them_score: 7,
-  verdict: "Couldn't read your face properly, but shoot your shot anyway",
-  subtitle: "AI had a moment, try again maybe",
-};
 
 async function callOpenAI(imageYou, imageThem) {
   const response = await openai.chat.completions.create({
     model: "gpt-4o-mini",
     max_tokens: 120,
-    temperature: 0.4,
+    temperature: 0,
     messages: [
       { role: "system", content: SYSTEM_PROMPT },
       {
@@ -110,8 +104,7 @@ export default async function handler(req, res) {
         continue;
       }
       console.error("OpenAI call failed after retry:", err.message);
-      result = FALLBACK;
-      break;
+      return res.status(500).json({ error: "Analysis failed, please try again" });
     }
   }
 
