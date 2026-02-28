@@ -400,15 +400,13 @@
     }
 
     .result-layout {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      grid-template-rows: 1fr auto;
+      display: flex;
       align-items: center;
-      justify-items: center;
-      gap: 40px 60px;
-      padding: 40px 60px;
+      justify-content: center;
+      gap: 60px;
+      padding: 40px 40px;
       width: 100%;
-      max-width: 1200px;
+      max-width: 1000px;
     }
 
     .result-left {
@@ -416,8 +414,8 @@
       flex-direction: column;
       align-items: center;
       gap: 28px;
-      grid-column: 1;
-      grid-row: 1;
+      flex: 1;
+      max-width: 500px;
     }
 
     .result-photos {
@@ -434,8 +432,8 @@
     }
 
     .result-avatar {
-      width: 150px;
-      height: 150px;
+      width: 120px;
+      height: 120px;
       border-radius: 50%;
       overflow: hidden;
       border: 3px solid #222;
@@ -449,7 +447,7 @@
 
     .result-rating {
       font-family: 'Anton', sans-serif;
-      font-size: 56px;
+      font-size: 48px;
       letter-spacing: 2px;
       line-height: 1;
     }
@@ -471,7 +469,7 @@
 
     .result-verdict {
       font-family: 'Anton', sans-serif;
-      font-size: clamp(24px, 5vw, 40px);
+      font-size: clamp(22px, 5vw, 36px);
       text-align: center;
       line-height: 1.3;
       letter-spacing: 1px;
@@ -512,7 +510,7 @@
     /* ── Chance meter ── */
     .chance-meter {
       width: 100%;
-      max-width: 440px;
+      max-width: 400px;
     }
 
     .chance-label {
@@ -558,26 +556,20 @@
       animation: shake 0.4s ease;
     }
 
-    .result-layout > .try-again-btn {
-      grid-column: 1;
-      grid-row: 2;
-    }
-
     /* ── Ebook panel (right side on desktop) ── */
     .ebook-panel {
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 18px;
+      gap: 14px;
       text-decoration: none;
       color: #fff;
-      grid-column: 2;
-      grid-row: 1 / 3;
+      flex-shrink: 0;
     }
 
     .ebook-cover-lg img {
-      width: 320px;
-      border-radius: 12px;
+      width: 220px;
+      border-radius: 10px;
       box-shadow: 0 8px 30px rgba(255,255,255,0.06);
       animation: jiggle 2.5s ease-in-out infinite;
     }
@@ -599,7 +591,7 @@
 
     .ebook-headline {
       font-family: 'Anton', sans-serif;
-      font-size: 26px;
+      font-size: 20px;
       letter-spacing: 0.5px;
       line-height: 1.2;
       text-align: center;
@@ -607,15 +599,15 @@
 
     .ebook-desc {
       font-family: 'Courier New', monospace;
-      font-size: 14px;
+      font-size: 12px;
       color: #888;
       line-height: 1.4;
       text-align: center;
-      max-width: 320px;
+      max-width: 240px;
     }
 
     .ebook-price {
-      font-size: 18px;
+      font-size: 15px;
       font-weight: 600;
     }
 
@@ -631,10 +623,10 @@
       background: #fff;
       color: #000;
       font-family: 'Anton', sans-serif;
-      font-size: 16px;
+      font-size: 14px;
       letter-spacing: 1.5px;
       text-transform: uppercase;
-      padding: 12px 36px;
+      padding: 10px 28px;
       border-radius: 4px;
       transition: background 0.2s;
     }
@@ -762,17 +754,13 @@
       .check-btn { margin-bottom: 14px; }
 
       .result-layout {
-        grid-template-columns: 1fr;
-        grid-template-rows: auto;
-        gap: 20px;
-        padding: 24px 16px;
+        flex-direction: column;
+        gap: 28px;
+        padding: 28px 16px;
       }
 
       .result-left {
-        grid-column: 1;
-        grid-row: auto;
         gap: 18px;
-        order: 1;
       }
 
       .result-photos { gap: 24px; }
@@ -787,9 +775,6 @@
       .chance-meter { max-width: 320px; }
 
       .ebook-panel {
-        grid-column: 1;
-        grid-row: auto;
-        order: 2;
         flex-direction: row;
         gap: 16px;
         background: #111;
@@ -805,14 +790,8 @@
         animation: none;
       }
 
-      .result-layout > .try-again-btn {
-        grid-column: 1;
-        grid-row: auto;
-        order: 3;
-      }
-
       .ebook-headline { font-size: 16px; text-align: left; }
-      .ebook-desc { font-size: 11px; text-align: left; max-width: none; }
+      .ebook-desc { font-size: 11px; text-align: left; }
       .ebook-price { font-size: 13px; }
       .ebook-cta { font-size: 12px; padding: 6px 16px; }
     }
@@ -927,77 +906,74 @@
 
       /* Result screen mobile */
       #screen-result {
-        justify-content: flex-start;
+        justify-content: center;
       }
 
       .result-layout {
-        gap: 16px;
-        padding: 18px 16px 24px;
-        align-items: center;
+        gap: 20px;
+        padding: 20px 16px;
       }
 
       .result-left {
-        gap: 12px;
+        gap: 14px;
       }
 
       .result-photos { gap: 16px; }
-      .result-person { gap: 6px; }
+      .result-person { gap: 8px; }
 
       .result-avatar {
-        width: 72px;
-        height: 72px;
+        width: 80px;
+        height: 80px;
         border-width: 2px;
       }
 
       .result-rating {
-        font-size: 30px;
+        font-size: 32px;
         letter-spacing: 1px;
       }
 
       .result-rating-label {
-        font-size: 9px;
+        font-size: 10px;
         letter-spacing: 1px;
       }
 
       .result-vs {
-        font-size: 14px;
-        margin-top: 12px;
+        font-size: 16px;
+        margin-top: 14px;
       }
 
       .result-verdict {
-        font-size: clamp(16px, 5vw, 24px);
+        font-size: clamp(18px, 5vw, 26px);
         max-width: 90vw;
         padding: 0 8px;
       }
 
-      .chance-meter { max-width: 260px; }
-      .chance-label { font-size: 11px; margin-bottom: 4px; }
-      .chance-label span { font-size: 16px; }
-      .chance-bar-track { height: 7px; }
+      .chance-meter { max-width: 280px; }
+      .chance-label { font-size: 12px; margin-bottom: 6px; }
+      .chance-label span { font-size: 18px; }
+      .chance-bar-track { height: 8px; }
 
       .result-subtext {
-        font-size: 10px;
-        max-width: 280px;
+        font-size: 11px;
+        max-width: 300px;
         padding: 0 8px;
       }
 
-      .ebook-panel {
-        gap: 12px;
-        padding: 12px 14px;
-        max-width: 340px;
+      .try-again-btn {
+        padding: 10px 32px;
+        font-size: 14px;
       }
 
-      .ebook-cover-lg img { width: 70px; }
-      .ebook-headline { font-size: 14px; }
+      .ebook-panel {
+        gap: 10px;
+        padding: 10px 12px;
+      }
+
+      .ebook-cover-lg img { width: 65px; }
+      .ebook-headline { font-size: 13px; }
       .ebook-desc { font-size: 10px; }
       .ebook-price { font-size: 12px; }
-      .ebook-cta { font-size: 11px; padding: 6px 14px; }
-
-      .result-layout > .try-again-btn {
-        order: 3;
-        padding: 10px 32px;
-        font-size: 13px;
-      }
+      .ebook-cta { font-size: 10px; padding: 5px 12px; }
     }
 
     @media (max-width: 360px) {
@@ -1008,23 +984,13 @@
         height: 70px;
       }
 
-      .result-layout { gap: 12px; padding: 14px 12px 20px; }
-
       .result-avatar {
-        width: 60px;
-        height: 60px;
+        width: 68px;
+        height: 68px;
       }
 
-      .result-rating { font-size: 26px; }
+      .result-rating { font-size: 28px; }
       .result-photos { gap: 12px; }
-      .result-verdict { font-size: clamp(14px, 4.5vw, 20px); }
-      .chance-meter { max-width: 220px; }
-
-      .ebook-panel { padding: 10px 10px; gap: 10px; max-width: 300px; }
-      .ebook-cover-lg img { width: 60px; }
-      .ebook-headline { font-size: 12px; }
-      .ebook-desc { font-size: 9px; }
-      .ebook-cta { font-size: 10px; padding: 5px 12px; }
     }
   </style>
 </head>
@@ -1152,6 +1118,8 @@
         </div>
 
         <div class="result-subtext" id="resultSubtext"></div>
+
+        <button class="try-again-btn" onclick="resetAll()">Try Again</button>
       </div>
 
       <a href="https://superprofile.bio/vp/69a162bb75d716001324dc9d" target="_blank" rel="noopener" class="ebook-panel">
@@ -1163,8 +1131,6 @@
         <div class="ebook-price"><span class="ebook-old-price">&#8377;599</span> &#8377;399</div>
         <div class="ebook-cta">Get The Guide</div>
       </a>
-
-      <button class="try-again-btn" onclick="resetAll()">Try Again</button>
     </div>
   </div>
 
