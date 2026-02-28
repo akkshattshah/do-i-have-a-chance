@@ -547,6 +547,84 @@
       animation: shake 0.4s ease;
     }
 
+    /* ── Ebook upsell ── */
+    .ebook-upsell {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      background: #111;
+      border: 1px solid #222;
+      border-radius: 12px;
+      padding: 14px 18px;
+      max-width: 420px;
+      width: 100%;
+      text-decoration: none;
+      color: #fff;
+      transition: transform 0.2s, border-color 0.3s;
+    }
+
+    .ebook-upsell:hover {
+      transform: translateY(-2px);
+      border-color: #444;
+    }
+
+    .ebook-cover img {
+      width: 80px;
+      border-radius: 6px;
+      flex-shrink: 0;
+    }
+
+    .ebook-info {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .ebook-headline {
+      font-family: 'Anton', sans-serif;
+      font-size: 16px;
+      letter-spacing: 0.5px;
+      line-height: 1.2;
+    }
+
+    .ebook-desc {
+      font-family: 'Courier New', monospace;
+      font-size: 11px;
+      color: #888;
+      line-height: 1.4;
+    }
+
+    .ebook-price {
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .ebook-old-price {
+      text-decoration: line-through;
+      color: #555;
+      font-weight: 400;
+      margin-right: 6px;
+    }
+
+    .ebook-cta {
+      display: inline-block;
+      background: #fff;
+      color: #000;
+      font-family: 'Anton', sans-serif;
+      font-size: 12px;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      padding: 6px 16px;
+      border-radius: 4px;
+      margin-top: 2px;
+      width: fit-content;
+      transition: background 0.2s;
+    }
+
+    .ebook-upsell:hover .ebook-cta {
+      background: #e0e0e0;
+    }
+
     /* ── Responsive ── */
 
     @media (max-width: 768px) {
@@ -723,6 +801,17 @@
         padding: 10px 32px;
         font-size: 14px;
       }
+
+      .ebook-upsell {
+        gap: 12px;
+        padding: 12px 14px;
+      }
+
+      .ebook-cover img { width: 70px; }
+      .ebook-headline { font-size: 14px; }
+      .ebook-desc { font-size: 10px; }
+      .ebook-price { font-size: 12px; }
+      .ebook-cta { font-size: 11px; padding: 5px 14px; }
     }
 
     @media (max-width: 360px) {
@@ -848,6 +937,18 @@
       </div>
 
       <div class="result-subtext" id="resultSubtext"></div>
+
+      <a href="https://superprofile.bio/vp/69a162bb75d716001324dc9d" target="_blank" rel="noopener" class="ebook-upsell">
+        <div class="ebook-cover">
+          <img src="ebook.png" alt="100 Texts To Keep Her Interested">
+        </div>
+        <div class="ebook-info">
+          <div class="ebook-headline">Don't fumble it over text.</div>
+          <div class="ebook-desc">100 ready-to-send texts that actually get replies.</div>
+          <div class="ebook-price"><span class="ebook-old-price">&#8377;599</span> &#8377;399</div>
+          <div class="ebook-cta">Get The Guide</div>
+        </div>
+      </a>
 
       <button class="try-again-btn" onclick="resetAll()">Try Again</button>
     </div>
